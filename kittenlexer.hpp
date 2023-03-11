@@ -173,11 +173,13 @@ public:
             }
             else if(stringqs.empty() && is_capsule_open(src[i]) && !suntil_newline) {
                 if(opens.empty() && (token.src != "" || !erase_emptys)) {
+                    if(token.src == "") token.line = line;
                     ret.push_back(token);
                     token = {};
                     token.line = line;
                 }
                 opens.push(src[i]);
+                if(token.src == "") token.line = line;
                 token.src += src[i];
             }
             else if(stringqs.empty() && is_capsule_close(src[i]) && !suntil_newline) {
@@ -188,13 +190,16 @@ public:
                 token.src += src[i];
                 opens.pop();
                 if(opens.empty()) {
+                    if(token.src == "") token.line = line;
                     ret.push_back(token);
                     token = {};
                 }
+                if(token.src == "") token.line = line;
             }
             else if(opens.empty() && (is_stringq(src[i]) || match_con_any(con_stringqs,src[i])) && !suntil_newline) {
                 if(stringqs.empty()) {
                     if(token.src != "" || !erase_emptys) {
+                        if(token.src == "") token.line = line;
                         ret.push_back(token);
                         token = {};
                     }
