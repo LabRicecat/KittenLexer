@@ -155,65 +155,66 @@ public:
     inline lexed_kittens lex(std::string src) {
         lexed_kittens ret;
         std::stack<char> opens;
-        std::string tmp;
         std::stack<char> stringqs;
         bool suntil_newline = false;
         unsigned long line = 1;
+        KittenToken token;
         for(size_t i = 0; i < src.size(); ++i) {
+            if(is_newline(src[i]) || match_con_any(con_newlines,src[i])) {
+                ++line;
+            }
             if(stringqs.empty() && opens.empty() && (is_ignore(src[i]) || is_newline(src[i]) || match_con_any(con_newlines,src[i]) || match_con_any(con_ignores,src[i]))) {
                 if(is_newline(src[i]) || match_con_any(con_newlines,src[i])) suntil_newline = false;
                 if((is_ignore(src[i]) || match_con_any(con_ignores,src[i])) && suntil_newline) continue; 
-                if(tmp != "" || !erase_emptys) {
-                    ret.push_back(KittenToken{tmp,false,line});
-                    tmp = "";
-                }
-                if(is_newline(src[i]) || match_con_any(con_newlines,src[i])) {
-                    ++line;
+                if(token.src != "" || !erase_emptys) {
+                    ret.push_back(token);
+                    token = {};
                 }
             }
             else if(stringqs.empty() && is_capsule_open(src[i]) && !suntil_newline) {
-                if(opens.empty() && (tmp != "" || !erase_emptys)) {
-                    ret.push_back(KittenToken{tmp,false,line});
-                    tmp = "";
+                if(opens.empty() && (token.src != "" || !erase_emptys)) {
+                    ret.push_back(token);
+                    token = {};
+                    token.line = line;
                 }
                 opens.push(src[i]);
-                tmp += src[i];
+                token.src += src[i];
             }
             else if(stringqs.empty() && is_capsule_close(src[i]) && !suntil_newline) {
                 if(opens.empty() || !match_closure(opens.top(),src[i])) {
                     failbit = true;
                     return ret;
                 }
-                tmp += src[i];
+                token.src += src[i];
                 opens.pop();
                 if(opens.empty()) {
-                    ret.push_back(KittenToken{tmp,false,line});
-                    tmp = "";
+                    ret.push_back(token);
+                    token = {};
                 }
             }
             else if(opens.empty() && (is_stringq(src[i]) || match_con_any(con_stringqs,src[i])) && !suntil_newline) {
                 if(stringqs.empty()) {
-                    if(tmp != "" || !erase_emptys) {
-                        ret.push_back(KittenToken{tmp,false,line});
-                        tmp = "";
+                    if(token.src != "" || !erase_emptys) {
+                        ret.push_back(token);
+                        token = {};
                     }
                     stringqs.push(src[i]);
                 }
                 else if(stringqs.top() == src[i]) {
                     stringqs.pop();
-                    ret.push_back(KittenToken{tmp,true,line});
-                    tmp = "";
+                    token.str = true;
+                    ret.push_back(token);
+                    token = {};
                 }
                 else {
-                    tmp += src[i];
+                    token.src += src[i];
                 }
             }
             else if(opens.empty() && stringqs.empty() && (is_extract(src[i]) || match_con_any(con_extracts,src[i])) && !suntil_newline) {
-                if(tmp != "" || !erase_emptys)
-                    ret.push_back(KittenToken{tmp,false,line});
-                tmp = src[i];
-                ret.push_back(KittenToken{tmp,false,line});
-                tmp = "";
+                if(token.src != "" || !erase_emptys)
+                    ret.push_back(KittenToken{token.src,false,line});
+                ret.push_back(KittenToken{std::string(1,src[i]),false,line});
+                token = {};
             }
             else if(stringqs.empty() && (is_lineskip(src[i]) || match_con_any(con_lineskips,src[i]))) {
                 suntil_newline = true;
@@ -223,13 +224,13 @@ public:
             }
             else if(opens.empty() && /*stringqs.empty() &&*/ src[i] == '\\') {
                 if(ignore_backslash_ops) {
-                    tmp += src[i];
+                    token.src += src[i];
                     continue;
                 }
                 if(i+1 != src.size()) {
                     char n = src[i+1];
-                    if(backslash_opts.count(n) != 0) tmp += backslash_opts[n];
-                    else tmp += n;
+                    if(backslash_opts.count(n) != 0) token.src += backslash_opts[n];
+                    else token.src += n;
                     ++i;
                 }
                 else {
@@ -238,15 +239,16 @@ public:
                 }
             }
             else if(!suntil_newline) {
-                tmp += src[i];
+                if(token.src == "") token.line = line;
+                token.src += src[i];
             }
         }
         if(!opens.empty() || !stringqs.empty()) {
             failbit = true;
             return ret;
         }
-        if(tmp != "" || !erase_emptys) {
-            ret.push_back(KittenToken{tmp,false,line});
+        if(token.src != "") {
+            ret.push_back(token);
         }
         return ret;
     }

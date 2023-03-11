@@ -3,5 +3,10 @@
 [1.0.1]
 path_notes = "- added option \"ignore_backslash_opts()\" to turn off the backslash checks
 "
-date = "2023/2/7 15:51:41"
+date = "2023/2"
+
+[1.0.2]
+path_notes = "- fixed line counter
+"
+date = "2023/3"
 
