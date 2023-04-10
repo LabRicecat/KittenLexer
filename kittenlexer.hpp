@@ -167,7 +167,7 @@ public:
                 if(is_newline(src[i]) || match_con_any(con_newlines,src[i])) suntil_newline = false;
                 if((is_ignore(src[i]) || match_con_any(con_ignores,src[i])) && suntil_newline) continue; 
                 if(token.src != "" || !erase_emptys) {
-                    token.line = line;
+                    token.line = line - 1 * (is_newline(src[i]) || match_con_any(con_newlines,src[i]));
                     ret.push_back(token);
                     token = {};
                 }
