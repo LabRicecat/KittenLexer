@@ -1,6 +1,12 @@
 # KittenLexer
 A minimalistic kitten themed lexer
 
+## Installation
+Install this dependency using the [catcaretaker](https://github.com/labricecat/catcaretaker)
+```sh
+$ catcare get labricecat/kittenlexer@main
+```
+
 ## Example
 ```cpp
 // create a lexer
